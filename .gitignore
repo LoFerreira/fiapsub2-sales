@@ -1,0 +1,9 @@
+/node_modules
+/lib
+.env
+fiapsub2-firebase-sdk.json
+
+# macOS
+fiapsub*-firebase-sdk.json
+.DS_Store
+.DS_Store?

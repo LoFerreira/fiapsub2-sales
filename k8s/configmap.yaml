@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiapsub2-config
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  # Em cluster, aponte para o Service do fiapsub2-core
+  CORE_API_BASE_URL: "http://fiapsub2-service"
+  # Nome do banco
+  MONGODB_DB_NAME: "fiapsub2-sales"
