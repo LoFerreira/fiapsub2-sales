@@ -56,6 +56,15 @@ Swagger endpoint:
 npm test
 ```
 
+Os testes de integração cobrem apenas os endpoints existentes neste serviço:
+
+- `GET /vehicles` (com `filter=sold|available`)
+- `GET /sales`
+- `POST /sales`
+- `POST /webhook/payment`
+
+Operações de criação/atualização de veículos (`POST /vehicles`, `PUT /vehicles/:id`) pertencem ao serviço core e foram removidas dos testes deste projeto.
+
 ## 🐳 Docker
 
 ```bash
@@ -100,8 +109,8 @@ docker build -t fiapsub2:latest .
 
 kubectl apply -f k8s/
 
-# Port-forward do Service (80 -> 3000 local)
 kubectl port-forward service/fiapsub2-service 3000:80
+kubectl port-forward service/fiapsub2-sales-service 3005:80
 ```
 
 ## 🧰 Troubleshooting
