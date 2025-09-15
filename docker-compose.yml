@@ -1,16 +1,51 @@
 services:
+  core:
+    image: ghcr.io/loferreira/fiapsub2-core:sha-5643dac
+    container_name: fiapsub2-core
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/fiapsub2-firebase-sdk.json
+    volumes:
+      - type: bind
+        source: ./fiapsub2-firebase-sdk.json
+        target: /app/fiapsub2-firebase-sdk.json
+        read_only: true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api-docs.json",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
+    depends_on:
+      - core
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
       - HOST=0.0.0.0
-  - CORE_API_BASE_URL=http://host.docker.internal:3000
+      - CORE_API_BASE_URL=http://core:3000
       - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB_NAME=${MONGODB_DB_NAME:-fiapsub2-sales}
     volumes: []
@@ -38,13 +73,15 @@ services:
       context: .
       dockerfile: Dockerfile
       target: builder
+    depends_on:
+      - core
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=development
       - PORT=3000
       - HOST=0.0.0.0
-  - CORE_API_BASE_URL=http://host.docker.internal:3000
+      - CORE_API_BASE_URL=http://core:3000
       - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB_NAME=${MONGODB_DB_NAME:-fiapsub2-sales}
     volumes:
