@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-RUN npm ci --only=production=false
+RUN npm install
 
 COPY src/ ./src/
 
@@ -22,7 +22,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --only=production && npm cache clean --force
+# Instala apenas dependências de runtime
+RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/lib ./lib
 

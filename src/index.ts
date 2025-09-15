@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { routes } from "./infra/routes";
 import { pageNotFoundHandler } from "./infra/middlewares/page-not-found.middleware";

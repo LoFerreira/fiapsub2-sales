@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiapsub2-deployment
+  labels:
+    app: fiapsub2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fiapsub2
+  template:
+    metadata:
+      labels:
+        app: fiapsub2
+    spec:
+      containers:
+        - name: fiapsub2-core
+          image: ghcr.io/loferreira/fiapsub2-core:sha-5643dac
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/fiapsub2-firebase-sdk.json
+          volumeMounts:
+            - name: firebase-key
+              mountPath: /var/secrets
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /api-docs.json
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api-docs.json
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: firebase-key
+          secret:
+            secretName: firebase-adminsdk

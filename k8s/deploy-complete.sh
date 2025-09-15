@@ -22,21 +22,84 @@ eval $(minikube docker-env)
 
 # Build da imagem no Docker do Minikube
 echo "🏗️  Fazendo build da imagem..."
-docker build -t fiapsub2:latest .
+docker build -t fiapsub2-sales:latest .
 
 # Aplicar ConfigMaps
 echo "⚙️  Aplicando ConfigMaps..."
 kubectl apply -f k8s/configmap.yaml
 
-# Sem dependências de Firebase; nenhuma secret adicional necessária
+# Subir fiapsub2-core (usando imagem pública) pelo repo do sales
+echo "🧩 Preparando fiapsub2-core (imagem pública) ..."
+# Secret do Firebase para o core
+if ! kubectl get secret firebase-adminsdk > /dev/null 2>&1; then
+    echo "🔐 Criando secret do Firebase para o core..."
+    if [ -f "fiapsub2-firebase-sdk.json" ]; then
+        kubectl create secret generic firebase-adminsdk \
+          --from-file=fiapsub2-firebase-sdk.json=./fiapsub2-firebase-sdk.json
+    else
+        echo "❌ Arquivo fiapsub2-firebase-sdk.json não encontrado na raiz do fiapsub2-sales."
+        echo "   Coloque o JSON do Firebase aqui ou crie manualmente a secret firebase-adminsdk."
+        echo "   Prosseguindo sem criar a secret pode falhar o core."
+    fi
+fi
+echo "🚀 Aplicando Core Service/Deployment..."
+kubectl apply -f k8s/core-service.yaml
+kubectl apply -f k8s/core-deployment.yaml
+
+# Criar Secret do MongoDB se não existir
+if ! kubectl get secret mongodb-secret > /dev/null 2>&1; then
+    echo "🔐 Criando secret do MongoDB..."
+    # Tenta usar variável de ambiente; caso não tenha, tenta carregar do .env
+        if [ -z "$MONGODB_URI" ]; then
+                if [ -f ".env" ]; then
+                        echo "📄 Carregando .env"
+                        set -a
+                        # shellcheck disable=SC1091
+                        . ./.env
+                        set +a
+                        # Fallback: aceitar chaves em minúsculas
+                        if [ -z "$MONGODB_URI" ] && [ -n "$mongodb_uri" ]; then
+                            export MONGODB_URI="$mongodb_uri"
+                        fi
+                        if [ -z "$MONGODB_DB_NAME" ] && [ -n "$mongodb_db_name" ]; then
+                            export MONGODB_DB_NAME="$mongodb_db_name"
+                        fi
+                            # Fallback extra: parse direto do .env em caso de incompatibilidade de shell
+                            if [ -z "$MONGODB_URI" ]; then
+                                parsed_uri=$(grep -E '^(MONGODB_URI|mongodb_uri)=' .env | tail -n1 | cut -d= -f2- | tr -d '\r')
+                                # remove aspas simples/duplas se houver
+                                parsed_uri="${parsed_uri%\"}"; parsed_uri="${parsed_uri#\"}"
+                                parsed_uri="${parsed_uri%\'}"; parsed_uri="${parsed_uri#\'}"
+                                if [ -n "$parsed_uri" ]; then export MONGODB_URI="$parsed_uri"; fi
+                            fi
+                            if [ -z "$MONGODB_DB_NAME" ]; then
+                                parsed_db=$(grep -E '^(MONGODB_DB_NAME|mongodb_db_name)=' .env | tail -n1 | cut -d= -f2- | tr -d '\r')
+                                parsed_db="${parsed_db%\"}"; parsed_db="${parsed_db#\"}"
+                                parsed_db="${parsed_db%\'}"; parsed_db="${parsed_db#\'}"
+                                if [ -n "$parsed_db" ]; then export MONGODB_DB_NAME="$parsed_db"; fi
+                            fi
+                fi
+        fi
+    if [ -z "$MONGODB_URI" ]; then
+        echo "❌ MONGODB_URI não definida."
+        echo "Defina a variável de ambiente MONGODB_URI ou inclua no arquivo .env antes de executar."
+        exit 1
+    fi
+    kubectl create secret generic mongodb-secret \
+      --from-literal=MONGODB_URI="$MONGODB_URI"
+else
+    echo "✅ Secret mongodb-secret já existe"
+fi
 
 # Aplicar Deployment
 echo "🚀 Aplicando Deployment..."
 kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/core-deployment.yaml
 
 # Aplicar Services
 echo "🌐 Aplicando Services..."
 kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/core-service.yaml
 
 # Aguardar pods ficarem prontos
 echo "⏳ Aguardando pods ficarem prontos..."
@@ -47,6 +110,7 @@ echo ""
 echo "📊 Status do Deploy:"
 echo "==================="
 kubectl get pods -l app=fiapsub2-sales
+kubectl get pods -l app=fiapsub2
 echo ""
 kubectl get services
 echo ""
