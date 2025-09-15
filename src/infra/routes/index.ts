@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import vehicleRoutes from "./vehicle.routes";
 import paymentRoutes from "./payment.routes";
+import healthRoutes from "./health.routes";
 import { setupSwagger } from "../middlewares/swagger.middleware";
 
 export const routes = (app: express.Express) => {
@@ -40,6 +41,9 @@ export const routes = (app: express.Express) => {
   app.use(express.json());
 
   setupSwagger(app);
+
+  // Health endpoints first (cheap and fast)
+  app.use(healthRoutes);
 
   app.use(vehicleRoutes);
   app.use(paymentRoutes);
