@@ -86,6 +86,8 @@ minikube start
 
 # Usar Docker do Minikube
 minikube docker-env | Invoke-Expression
+#MacOS
+eval $(minikube docker-env)
 
 docker build -t fiapsub2-sales:latest .
 
@@ -93,6 +95,12 @@ kubectl apply -f k8s/
 
 kubectl port-forward service/fiapsub2-service 3000:80
 kubectl port-forward service/fiapsub2-sales-service 3005:80
+
+# limpar tudo
+kubectl delete -f k8s/
+
+# Parar minikube
+minikube stop
 ```
 
 ## 🔧 Tecnologias
