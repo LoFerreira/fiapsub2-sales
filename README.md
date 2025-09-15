@@ -63,8 +63,6 @@ Os testes de integração cobrem apenas os endpoints existentes neste serviço:
 - `POST /sales`
 - `POST /webhook/payment`
 
-Operações de criação/atualização de veículos (`POST /vehicles`, `PUT /vehicles/:id`) pertencem ao serviço core e foram removidas dos testes deste projeto.
-
 ## 🐳 Docker
 
 ```bash
@@ -83,29 +81,13 @@ docker compose up -d --build
 
 ## ☸️ Minikube (Kubernetes)
 
-Use os scripts de conveniência para o MacOS:
-
-```bash
-# Subir tudo e abrir port-forward
-chmod +x k8s/*.sh
-k8s/start-minikube.sh
-
-# Parar port-forward e remover recursos (mantém Minikube)
-k8s/stop-minikube.sh
-
-# Parar tudo (inclui Minikube)
-k8s/stop-minikube.sh --full
-```
-
-Alternativa manual (Todos os Sistemas Operacionais):
-
 ```bash
 minikube start
 
 # Usar Docker do Minikube
 minikube docker-env | Invoke-Expression
 
-docker build -t fiapsub2:latest .
+docker build -t fiapsub2-sales:latest .
 
 kubectl apply -f k8s/
 
@@ -113,20 +95,11 @@ kubectl port-forward service/fiapsub2-service 3000:80
 kubectl port-forward service/fiapsub2-sales-service 3005:80
 ```
 
-## 🧰 Troubleshooting
-
-- Docker Desktop vs Minikube Docker
-
-  - Se você rodou `eval $(minikube docker-env)`, seu shell aponta para o Docker do Minikube.
-  - Para voltar ao Docker Desktop: `eval $(minikube docker-env -u)` e opcionalmente `docker context use desktop-linux`.
-
-- Verifique se as variáveis MONGODB_URI e MONGODB_DB_NAME estão definidas corretamente.
-
 ## 🔧 Tecnologias
 
 - Node.js + TypeScript
 - Express.js
-- MongoDB (mongodb driver)
+- MongoDB (mongodb atlas)
 - Jest (testes)
 - Docker, Kubernetes (Minikube)
 - GitHub Actions (CI/CD)
