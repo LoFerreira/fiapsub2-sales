@@ -38,6 +38,13 @@ MONGODB_URI="<sua_connection_string>"
 MONGODB_DB_NAME="fiapsub2-sales"
 ```
 
+## 🔑 Configuração do Firebase (obrigatório para docker-compose e minikube)
+
+O app inicializa o Firebase Admin APENAS via arquivo JSON do Service Account.
+
+1. Crie o arquivo na raiz: `fiapsub2-firebase-sdk.json`
+2. Adicione o JSON do arquivo fiapsub2-firebase-sdk.json enviado junto com o arquivo do projeto. Infelizmente não consigo compartilhar por aqui por que o firebase bloqueia a key.
+
 ## 🚀 Executar local (sem Docker)
 
 ```bash
